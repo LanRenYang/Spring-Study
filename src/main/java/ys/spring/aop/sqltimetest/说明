@@ -1,0 +1,25 @@
+sql性能测试：
+应该尽量减少数据库链接池链接数据库，因为这样消耗性能。
+
+ <association>标签的两种使用方式:
+    <!--将查询出来的直接映射给FilmTypeEntity属性-->
+    <resultMap id="BaseResultMap" type="ys.spring.aop.sqltimetest.FilmEntity">
+        <id column="id" jdbcType="INTEGER" property="id"/>
+        <result column="film_name" jdbcType="VARCHAR" property="filmName"/>
+        <result column="film_type_id" jdbcType="INTEGER" property="filmTypeId"/>
+        <association column="film_type_id" property="filmType" javaType="ys.spring.aop.sqltimetest.FilmTypeEntity">
+            <id column="id" jdbcType="INTEGER" property="id"/>
+            <result column="film_Type" jdbcType="VARCHAR" property="filmType"/>
+        </association>
+    </resultMap>
+
+
+    <!--级联查询-->
+    <resultMap id="BaseResultMap1" type="ys.spring.aop.sqltimetest.FilmEntity">
+        <id column="id" jdbcType="INTEGER" property="id"/>
+        <result column="film_name" jdbcType="VARCHAR" property="filmName"/>
+        <result column="film_type_id" jdbcType="INTEGER" property="filmTypeId"/>
+        <association column="film_type_id" property="filmType" select="ys.spring.aop.sqltimetest.FilmTypeDao.selectById">
+        </association>
+    </resultMap>
+

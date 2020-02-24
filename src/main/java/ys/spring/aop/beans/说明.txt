@@ -1,0 +1,28 @@
+spring解决了两个问题
+1，对象之间频繁创建
+2，依赖关系复杂
+
+IOC的两个特性：控制反转和依赖注入
+统一bean的构建，自动维护bean的依赖关系。
+控制反转：需要的对象不由对象直接创建，而是由spring统一创建，交给容器管理。这个容器就是ConcurrentHashMap，以bean的id或者name做key.
+依赖注入：当需要这个bean时，就从容器中去获取。
+
+bean的创建类型也分两种 单例 或 多例。单例——每次使用时都先从单例池获取，单例池没有才创建。多例——每次使用都创建一个新的对象。
+bean的创建方法:  
+1），@bean注解 不指定bean名称情况下，spring默认使用注解所在方法名做bean名称，可以为bean指定bean名称。
+2），遵从FactoryBean接口，重写getObject() 和 getObjectType()方法，
+3）， 遵从ImportBeanDefinitionRegistrar接口，重写registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry)。
+RootBeanDefinition——Bean定义器；BeanDefinitionRegistry——Bean注册器。先定义再注册。
+
+spring IOC容器的核心：创建和管理bean分为三个角色：bean工厂、bean定义器、bean注册器。bean工厂根据bean的定义，把bean注册在ConcurrentHashMap中。DefaultListableBeanFactory  默认bean工厂，bean存放在ConcurrentHashMap中，以beanName为key,beanDefinition为value。
+bean的属性以及属性对应的属性值存放在RootBeanDefinition（Bean定义器）中，那么RootBeanDefinition是如何保存bean属性及值呢？
+	RootBeanDefinition中有成员变量：MutablePropertyValues beanpropertyValues； 
+	MutablePropertyValues中有成员变量：List<PropertyValue> propertyValueList；List<PropertyValue>是bean对象属性和属性值的最终呈现形式，MutablePropertyValues对添加属性和属性值的功能做了增强，可以直接传参list,也可以传参map,可以传参PropertyValue对象，也可以传参属性名和属性值。
+	PropertyValue中有两个重要的成员变量：name 和 value —— name对应属性名，value对应属性值。
+
+一个@Configuration注解就相当于原始spring项目中的xml文件。
+
+依赖查找：
+byName	根据名称查找
+byType    根据类型查找
+

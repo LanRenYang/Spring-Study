@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ys.spring.aop.sqltimetest.FilmDao">
+
+    <!--将查询出来的直接映射给FilmTypeEntity属性-->
+    <resultMap id="BaseResultMap" type="ys.spring.aop.sqltimetest.FilmEntity">
+        <id column="id" jdbcType="INTEGER" property="id"/>
+        <result column="film_name" jdbcType="VARCHAR" property="filmName"/>
+        <result column="film_type_id" jdbcType="INTEGER" property="filmTypeId"/>
+        <association column="film_type_id" property="filmType" javaType="ys.spring.aop.sqltimetest.FilmTypeEntity">
+            <id column="id" jdbcType="INTEGER" property="id"/>
+            <result column="film_Type" jdbcType="VARCHAR" property="filmType"/>
+        </association>
+    </resultMap>
+
+    <!--级联查询-->
+    <resultMap id="BaseResultMap1" type="ys.spring.aop.sqltimetest.FilmEntity">
+        <id column="id" jdbcType="INTEGER" property="id"/>
+        <result column="film_name" jdbcType="VARCHAR" property="filmName"/>
+        <result column="film_type_id" jdbcType="INTEGER" property="filmTypeId"/>
+        <association column="film_type_id" property="filmType" select="ys.spring.aop.sqltimetest.FilmTypeDao.selectById">
+        </association>
+    </resultMap>
+
+
+    <resultMap id="BaseResultMap2" type="ys.spring.aop.sqltimetest.FilmEntity">
+        <id column="id" jdbcType="INTEGER" property="id"/>
+        <result column="film_name" jdbcType="VARCHAR" property="filmName"/>
+        <result column="film_type_id" jdbcType="INTEGER" property="filmTypeId"/>
+    </resultMap>
+
+    <select id="selectFilmById" parameterType="int" resultMap="BaseResultMap">
+            select * from film INNER JOIN film_type ON film.id = film_type.id where film.id = #{id}
+    </select>
+
+    <select id="selectSeById" parameterType="int" resultMap="BaseResultMap1">
+            select * from film where film.id = #{id}
+    </select>
+
+    <select id="selectById" parameterType="int" resultMap="BaseResultMap2">
+            select * from film where film.id = #{id}
+    </select>
+
+</mapper>
