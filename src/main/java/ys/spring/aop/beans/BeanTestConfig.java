@@ -20,8 +20,11 @@ public class BeanTestConfig {
      */
     @Bean("filmEntityBean")
     public FilmEntity createFilm() {
-        FilmEntity filmEntity =  new FilmEntity();
-        filmEntity.setFilmName("2");
+        FilmEntity filmEntity = new FilmEntity();
+        filmEntity.setFilmName("大鱼海棠");
+        filmEntity.setId(1021);
+        System.out.println("创建好了");
+
         return filmEntity;
     }
 

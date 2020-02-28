@@ -17,6 +17,7 @@ public class BeanTestConfig2 {
      */
     @Bean("filmTypeEntityBean")
     public FilmTypeEntity createFilm() {
+        System.out.println("你过来啊");
         return new FilmTypeEntity();
     }
 }

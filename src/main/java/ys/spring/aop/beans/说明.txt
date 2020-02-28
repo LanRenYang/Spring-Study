@@ -2,27 +2,106 @@ spring解决了两个问题
 1，对象之间频繁创建
 2，依赖关系复杂
 
+
+
 IOC的两个特性：控制反转和依赖注入
 统一bean的构建，自动维护bean的依赖关系。
 控制反转：需要的对象不由对象直接创建，而是由spring统一创建，交给容器管理。这个容器就是ConcurrentHashMap，以bean的id或者name做key.
 依赖注入：当需要这个bean时，就从容器中去获取。
 
-bean的创建类型也分两种 单例 或 多例。单例——每次使用时都先从单例池获取，单例池没有才创建。多例——每次使用都创建一个新的对象。
+
+
+bean的创建类型也分两种 单例 或 多例。
+单例——每次使用时都先从单例池（private final Map<String, Object> singletonObjects = new ConcurrentHashMap<>(256);）获取，单例池没有才创建。  DefaultSingletonBeanRegistry的成员变量singletonObject就是单例池。
+多例——每次使用都创建一个新的对象。DefaultListableBeanFactory的成员变量beanDefinitionMap就是ioc容器池
+
+
+
 bean的创建方法:  
-1），@bean注解 不指定bean名称情况下，spring默认使用注解所在方法名做bean名称，可以为bean指定bean名称。
+1），@Bean注解 不指定bean名称情况下，spring默认使用注解所在方法名做bean名称，可以为bean指定bean名称。
+        @Bean注解创建对象是通过构造方法创建，不是通过反射，所以这种方法创建bean的定义器中propertyValues属性为null。
 2），遵从FactoryBean接口，重写getObject() 和 getObjectType()方法，
 3）， 遵从ImportBeanDefinitionRegistrar接口，重写registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry)。
-RootBeanDefinition——Bean定义器；BeanDefinitionRegistry——Bean注册器。先定义再注册。
+        AbstractBeanDefinition——Bean定义器；BeanDefinitionRegistry——Bean注册器。先定义再注册。
 
-spring IOC容器的核心：创建和管理bean分为三个角色：bean工厂、bean定义器、bean注册器。bean工厂根据bean的定义，把bean注册在ConcurrentHashMap中。DefaultListableBeanFactory  默认bean工厂，bean存放在ConcurrentHashMap中，以beanName为key,beanDefinition为value。
-bean的属性以及属性对应的属性值存放在RootBeanDefinition（Bean定义器）中，那么RootBeanDefinition是如何保存bean属性及值呢？
-	RootBeanDefinition中有成员变量：MutablePropertyValues beanpropertyValues； 
+
+
+spring IOC容器的核心：创建和管理bean分为三个角色：bean工厂（工厂中有成员变量beanDefinitionMap）、bean定义器、bean注册器。bean工厂根据bean的定义，把bean注册在ConcurrentHashMap中。DefaultListableBeanFactory默认bean工厂，bean创建完成前的属性信息存放在ConcurrentHashMap中，以beanName为key,beanDefinition为value。
+bean的属性以及属性对应的属性值存放在BeanDefinition（Bean定义器）中，那么BeanDefinition是如何保存bean属性及值呢？
+	AbstractBeanDefinition中有成员变量(RootBeanDefinition继承了AbstractBeanDefinition抽象类，是bean定义器的一种)：MutablePropertyValues beanpropertyValues；
 	MutablePropertyValues中有成员变量：List<PropertyValue> propertyValueList；List<PropertyValue>是bean对象属性和属性值的最终呈现形式，MutablePropertyValues对添加属性和属性值的功能做了增强，可以直接传参list,也可以传参map,可以传参PropertyValue对象，也可以传参属性名和属性值。
 	PropertyValue中有两个重要的成员变量：name 和 value —— name对应属性名，value对应属性值。
 
+
+
 一个@Configuration注解就相当于原始spring项目中的xml文件。
 
-依赖查找：
+
+
+依赖查找的两种方式：
 byName	根据名称查找
 byType    根据类型查找
+这两种查找方式都用同一个方法名——BeanFactory接口定义的getBean方法，BeanFactory接口利用方法的重载定义了这大类查找bean的方式。
+根据 名称 查找 走的是 org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean;
+根据 类型 查找 走的是org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveBean();
 
+
+
+Spring如何解决循环依赖问题？
+DefaultListableBeanFactory解析：
+    DefaultListableBeanFactory是spring启动时会创建的bean工厂，DefaultListableBeanFactory遵从了ConfigurableListableBeanFactory接口，用来创建bean和获取bean。
+GenericBeanDefinition和RootBeanDefinition这两种bean定义器有什么区别？
+BeanFactory和FactoryBean有什么区别？
+    BeanFactory 生产bean对象的工厂，FactoryBean是一个bean。
+        工厂是生产bean的，但是首先要有工厂对象，这个工厂对象也可以bean形式存在IOC容器中，那么这bean就被称作FactoryBean。
+        这个FactoryBean可以生产Bean,站在被生产出来bean的角度看，这是一个生产bean的工厂，所以被成为beanFactory。
+    BeanFactory接口主要提供了getBean(String name),getBean(Class<T> requiredType),getType(String name)，containsBean(String name)等方法，主要用于获取工厂容器中的bean。
+    FactoryBean接口主要提供了getObject(), getObjectType()方法，用于创建bean。
+
+
+
+//完成beanDefinition的创建。register：注册
+org.springframework.context.annotation.AnnotationConfigApplicationContext.register()
+//
+org.springframework.context.support.AbstractApplicationContext.refresh()
+    /*
+      BeanFactoryPostProcessor:beanFactory后置处理器。invokeBeanFactoryPostProcessors()做的事情：
+        1，执行spring或者程序员提供的所有遵从了BeanFactoryPostProcessor接口的类。context中有成员变量---> List<BeanFactoryPostProcessor> beanFactoryPostProcessors。
+           org.springframework.context.support.PostProcessorRegistrationDelegate.invokeBeanFactoryPostProcessors(org.springframework.beans.factory.config.ConfigurableListableBeanFactory, java.util.List<org.springframework.beans.factory.config.BeanFactoryPostProcessor>)方法会遍历beanFactoryPostProcessors对ConfigurableListableBeanFactory工厂进行操作。
+        2，扫描
+        3，parse BeanDefinition
+        4,put.add(beanName，beanDefinition)
+    */
+    this.invokeBeanFactoryPostProcessors(beanFactory);
+    this.finishBeanFactoryInitialization(beanFactory);
+
+
+
+bean的创建过程：
+org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(java.lang.String, org.springframework.beans.factory.ObjectFactory<?>)
+    org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean()
+        org.springframework.beans.factory.support.AbstractBeanFactory.createBean()
+            org.springframework.beans.factory.support.AbstractBeanFactory.resolveBeanClass()
+                OR
+            org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean()
+
+
+
+springIOC重要的几个方法：
+1），
+org.springframework.context.support.AbstractApplicationContext.invokeBeanFactoryPostProcessors 下的
+    org.springframework.context.support.PostProcessorRegistrationDelegate.invokeBeanFactoryPostProcessors(org.springframework.beans.factory.config.ConfigurableListableBeanFactory, java.util.List<org.springframework.beans.factory.config.BeanFactoryPostProcessor>)
+        作用：遍历BeanFactoryPostProcessor集合对ConfigurableListableBeanFactory进行处理。
+2），
+org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(java.lang.String, boolean)
+    作用：根据beanName从singletonObjects中获取bean，如果singletonObjects中没有，就从根据beanName从singletonFactories中获取一个ObjectFactory，用ObjectFactory的getType()创建一个。
+org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(java.lang.String, org.springframework.beans.factory.ObjectFactory<?>)
+    作用：根据beanName从singletonObjects中获取bean，如果singletonObjects中没有，就用传参的ObjectFactory的getType()创建一个。
+3),
+org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(java.lang.String, org.springframework.beans.factory.ObjectFactory<?>)
+    org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean()
+        org.springframework.beans.factory.support.AbstractBeanFactory.createBean()
+            org.springframework.beans.factory.support.AbstractBeanFactory.resolveBeanClass()
+                OR
+            org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean()
+    在2）方法中，已经说过了如果singletonObjects中没有找到bean，就会用ObjectFactory的getType()创建一个。DefaultListableBeanFactory是Spring使用的bean工厂，这里会执行该类父类的doGetBean() 和createBean()
