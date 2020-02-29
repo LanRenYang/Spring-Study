@@ -1,0 +1,28 @@
+需要的地方getSing一个，get不到就由工厂创建一个并且map.put()添加在单例对象池中。
+由doCreateBean() 来创建，创建出来就addSing()添加在单例对象池中
+
+
+在创建testcontroller过程中，发现他需要依赖另一个bean——testService，把自己代理成变成一个工厂，把testControler放在singletonFactories中（用addSingletonFactory()方法），自己需要testService就自己来创建，创建完成之后立即删除自己的工厂身份。
+		org.springframework.beans.factory.support.DefaultSingletonBeanRegistry#singletonsCurrentlyInCreation这个是啥，为啥singletonsCurrentlyInCreation.contains(beanName) == true时才允许controller这个工厂创建service?------------------------???
+			org.springframework.beans.factory.support.DefaultSingletonBeanRegistry#inCreationCheckExclusions又是个啥，为啥!this.inCreationCheckExclusions.contains(beanName) == true(这里面没有这个beanName时才允许singletonsCurrentlyInCreation.add(beanName))----------------------------？？？
+然后去创建testService,如果testService也需要依赖其他bean,就把他也放在singletonFactories中，如果不需要就完成创建，创建后把他放在registeredSingletons中，
+	不对不对，testService也会被添加在singletonFactories中，也就是说bean在创建时不是发现又依赖bean才会添加在singletonFactories中，莫非singletonFactories是bean必经的？！！
+	知道了，从singletonFactories中到singletonObjects中是bean必经的过程。哪怕他没有需要依赖的bean,但还是要走一趟检查。如果一个bean需要依赖其他bean,他会在singletonFactories中停留一段时间，知道他依赖的bean都创建完成，他才会从singletonFactories中转移到singletonObjects。
+
+
+
+org.springframework.beans.factory.support.AbstractBeanFactory#isTypeMatch(java.lang.String, org.springframework.core.ResolvableType, boolean)-----------------------???
+是个什么方法，他在调org.springframework.beans.factory.support.DefaultSingletonBeanRegistry#getSingleton(java.lang.String, boolean)
+
+
+开始调用org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#createBean(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Object[])了，开始创建testControllerl了
+他是谁调用的？---------------------------------------------------------------------？？？
+
+又发现了，Spring创建Bean的两种方式，在org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#createBean(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Object[])方法里面：
+	1，org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#resolveBeforeInstantiation
+	2，org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#doCreateBean
+ 咦？spring创建TestController后，调用了addSingletonFactory(String beanName, ObjectFactory<?> singletonFactory)，把testController这个假的工厂对象添加到singletonFactories中，看来就是这两个方法把testController变成了ObjectFactory类型。
+同时singletonsCurrentlyInCreation.contains(beanName) == true了，看来testController创建完成，把testController变成了ObjectFactory类型后，singletonsCurrentlyInCreation.add(beanName)了。
+
+
+

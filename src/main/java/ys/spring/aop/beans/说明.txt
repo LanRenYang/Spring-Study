@@ -104,4 +104,24 @@ org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingle
             org.springframework.beans.factory.support.AbstractBeanFactory.resolveBeanClass()
                 OR
             org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean()
-    在2）方法中，已经说过了如果singletonObjects中没有找到bean，就会用ObjectFactory的getType()创建一个。DefaultListableBeanFactory是Spring使用的bean工厂，这里会执行该类父类的doGetBean() 和createBean()
+    在（2）方法中，已经说过了如果singletonObjects中没有找到bean，就会用ObjectFactory的getType()创建一个。DefaultListableBeanFactory是Spring使用的bean工厂，这里会执行该类父类的doGetBean() 和createBean()
+
+
+
+org.springframework.beans.factory.support.DefaultSingletonBeanRegistry类解析：
+成员变量：
+    (1),singletonObjects    单例对象池，ConcurrentHashMap类型，存放单例对象
+    (2),singletonFactories  单例工厂池，HashMap类型，存放工厂对象。
+    (3),earlySingletonObjects   早期的单例对象池，HashMap类型
+    (4),registeredSingletons    已注册的单例对象名称集合，LinkedHashSet类型，存放已注册的单例对象的beanName。
+成员方法：
+    (1),org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.registerSingleton(String beanName, Object singletonObject)
+    // 注册bean,用先从中获取——singletonObjectsthis.singletonObjects.get(beanName)，如果改bean已经存在则抛出bean已存在，不能重复创建异常。不存在则调用addSingleton(beanName, singletonObject);
+    (2),org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.addSingleton(String beanName, Object singletonObject)
+    // 以beanName为key,将singletonObject存放在singletonObjects中
+    (3),org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.addSingletonFactory(	protected void addSingletonFactory(String beanName, ObjectFactory<?> singletonFactory)
+    // 以beanName为key,将singletonFactory存放在singletonFactories中
+    (4),org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(java.lang.String, boolean)
+    // 根据beanName获取一个bean，如果不存在，就用beanName从单例工厂池中获取工厂，由创建一个bean保存在单例对象池中，并返回。
+    (5),org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(java.lang.String, org.springframework.beans.factory.ObjectFactory<?>)
+    // 根据beanName获取一个bean，如果不存在，就由ObjectFactory创建一个bean保存在单例对象池中，并返回。
