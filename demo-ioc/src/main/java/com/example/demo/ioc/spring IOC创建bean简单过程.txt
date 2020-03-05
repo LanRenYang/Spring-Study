@@ -3,8 +3,15 @@
 
 
 在创建testcontroller过程中，发现他需要依赖另一个bean——testService，把自己代理成变成一个工厂，把testControler放在singletonFactories中（用addSingletonFactory()方法），自己需要testService就自己来创建，创建完成之后立即删除自己的工厂身份。
-		org.springframework.beans.factory.support.DefaultSingletonBeanRegistry#singletonsCurrentlyInCreation这个是啥，为啥singletonsCurrentlyInCreation.contains(beanName) == true时才允许controller这个工厂创建service?------------------------???
-			org.springframework.beans.factory.support.DefaultSingletonBeanRegistry#inCreationCheckExclusions又是个啥，为啥!this.inCreationCheckExclusions.contains(beanName) == true(这里面没有这个beanName时才允许singletonsCurrentlyInCreation.add(beanName))----------------------------？？？
+		org.springframework.beans.factory.support.DefaultSingletonBeanRegistry#singletonsCurrentlyInCreation这个是啥，
+		为啥singletonsCurrentlyInCreation.contains(beanName) == true时才允许testController这个假工厂调用getObject()?------------------------???
+		解答： singletonsCurrentlyInCreation是一个Set集合，用于保存处于正在创建中的bean的beanName,一个bean的创建分为2步：1，调用构造方法初始化对象；2，给对象属性赋值。
+		       testController在创建过程中，1步骤已完成，2步骤时发现没有testService对象，spring会先把testController保存在singletonsCurrentlyInCreation集合中，来保存bean这个时候的状态。
+		       实质上，这个set集合保存的是 已经调用了自己的构造方法，但是还没有对属性进行赋值的bean对象，那么属性赋值的值从哪里来呢？！—— 【注意】这个时候，bean因为没有创建完成，不存在singletonObjects中，
+		       但是，他已经存在beanFactory中，所以可以获取singletonFactory,用getObject()来创建
+
+			org.springframework.beans.factory.support.DefaultSingletonBeanRegistry#inCreationCheckExclusions又是个啥，
+			为啥!this.inCreationCheckExclusions.contains(beanName) == true(这里面没有这个beanName时才允许singletonsCurrentlyInCreation.add(beanName))----------------------------？？？
 然后去创建testService,如果testService也需要依赖其他bean,就把他也放在singletonFactories中，如果不需要就完成创建，创建后把他放在registeredSingletons中，
 	不对不对，testService也会被添加在singletonFactories中，也就是说bean在创建时不是发现又依赖bean才会添加在singletonFactories中，莫非singletonFactories是bean必经的？！！
 	知道了，从singletonFactories中到singletonObjects中是bean必经的过程。哪怕他没有需要依赖的bean,但还是要走一趟检查。如果一个bean需要依赖其他bean,他会在singletonFactories中停留一段时间，知道他依赖的bean都创建完成，他才会从singletonFactories中转移到singletonObjects。
