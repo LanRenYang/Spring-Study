@@ -7,5 +7,5 @@ package ys.spring.aop.dynamicproxy;
  */
 public interface Ability {
 
-     void ability(int x);
+     void ability(int x) throws InterruptedException;
 }

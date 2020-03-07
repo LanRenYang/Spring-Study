@@ -63,10 +63,10 @@ class SpringAopApplicationTests {
     void testMy() {
         // bean工厂后置处理器？我们可以自定义类继承该接口，定义自己的bean工厂后置处理器，spring会先后执行后置处理器
         //BeanFactoryPostProcessor beanFactoryPostProcessor;
-       // AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(BeanTestConfig.class);
+        // AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(BeanTestConfig.class);
 
         AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
-
+        // context.registerBeanDefinition();
         /*
             实质上context.registerBean()调用了beanFactory.registerBeanDefinition(),这个方法里面做了beanDefinitionMap.put(beanName, beanDefinition)操作。
                一下是registerBean()的重载：

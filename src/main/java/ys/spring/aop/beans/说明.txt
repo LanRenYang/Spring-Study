@@ -6,14 +6,14 @@ spring解决了两个问题
 
 IOC的两个特性：控制反转和依赖注入
 统一bean的构建，自动维护bean的依赖关系。
-控制反转：需要的对象不由对象直接创建，而是由spring统一创建，交给容器管理。这个容器就是ConcurrentHashMap，以bean的id或者name做key.
+控制反转：需要的对象不由对象直接创建，而是由spring统一创建，交给容器管理。这个容器就是ConcurrentHashMap，以beanName做key.
 依赖注入：当需要这个bean时，就从容器中去获取。
 
 
 
 bean的创建类型也分两种 单例 或 多例。
 单例——每次使用时都先从单例池（private final Map<String, Object> singletonObjects = new ConcurrentHashMap<>(256);）获取，单例池没有才创建。  DefaultSingletonBeanRegistry的成员变量singletonObject就是单例池。
-多例——每次使用都创建一个新的对象。DefaultListableBeanFactory的成员变量beanDefinitionMap就是ioc容器池
+多例——每次使用都创建一个新的对象。
 
 
 
@@ -26,7 +26,7 @@ bean的创建方法:
 
 
 
-spring IOC容器的核心：创建和管理bean分为三个角色：bean工厂（工厂中有成员变量beanDefinitionMap）、bean定义器、bean注册器。bean工厂根据bean的定义，把bean注册在ConcurrentHashMap中。DefaultListableBeanFactory默认bean工厂，bean创建完成前的属性信息存放在ConcurrentHashMap中，以beanName为key,beanDefinition为value。
+DefaultListableBeanFactory是spring默认的bean工厂。他有成员变量beanDefinitionMap——BeanDefinition类型(bean定义器，保存bean的属性信息)、遵从BeanDefinitionRegistry接口，有注册功能(bean注册器)。bean工厂根据bean的定义，把bean的属性信息注册在beanDefinitionMap中。DefaultListableBeanFactory默认bean工厂，bean创建完成前的属性信息存放在ConcurrentHashMap中，以beanName为key,beanDefinition为value。
 bean的属性以及属性对应的属性值存放在BeanDefinition（Bean定义器）中，那么BeanDefinition是如何保存bean属性及值呢？
 	AbstractBeanDefinition中有成员变量(RootBeanDefinition继承了AbstractBeanDefinition抽象类，是bean定义器的一种)：MutablePropertyValues beanpropertyValues；
 	MutablePropertyValues中有成员变量：List<PropertyValue> propertyValueList；List<PropertyValue>是bean对象属性和属性值的最终呈现形式，MutablePropertyValues对添加属性和属性值的功能做了增强，可以直接传参list,也可以传参map,可以传参PropertyValue对象，也可以传参属性名和属性值。
@@ -125,3 +125,37 @@ org.springframework.beans.factory.support.DefaultSingletonBeanRegistry类解析�
     // 根据beanName获取一个bean，如果不存在，就用beanName从单例工厂池中获取工厂，由创建一个bean保存在单例对象池中，并返回。
     (5),org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(java.lang.String, org.springframework.beans.factory.ObjectFactory<?>)
     // 根据beanName获取一个bean，如果不存在，就由ObjectFactory创建一个bean保存在单例对象池中，并返回。
+
+
+
+DefaultListableBeanFactory是DefaultSingletonBeanRegistry的间接子类。在继承关系上：
+DefaultListableBeanFactory extends AbstractAutowireCapableBeanFactory
+    AbstractAutowireCapableBeanFactory extends AbstractBeanFactory
+        AbstractBeanFactory extends FactoryBeanRegistrySupport
+            FactoryBeanRegistrySupport extends DefaultSingletonBeanRegistry
+
+DefaultSingletonBeanRegistry：
+    成员变量：
+    singletonObjects：单例对象池，创建成功的对象会被put到singletonObjects中,成为被spring IOC容器管理的bean;
+    singletonFactories：单例工厂对象，testController在创建的过程中发现需要依赖其他bean,testController会先被保存在singletonFactories中，
+    earlySingletonObjects：早期的单例对象池，
+    registeredSingletons：注册的单例对象池，
+    singletonsCurrentlyInCreation：当前正在创建的单例对象池，在对象开始创建前会add.put(beanName),对象创建完成后会remove(beanName)。对象创建的创建分为2步，1，用构造方法初始化实例；2，为对象属性赋值。
+                                   在beforeSingletonCreation()中会singletonsCurrentlyInCreation.add(beanName)，在afterSingletonCreation()中会singletonsCurrentlyInCreation.remove(beanName)。
+    inCreationCheckExclusions：bean在创建过程中中的检查排除集合，
+    成员方法：
+    registerSingleton(String beanName, Object singletonObject)  // 注册bean,判断singletonObjects中是否存在beanName,如果已经存在则不能在注册，如果不存在
+    addSingleton(String beanName, Object singletonObject)
+    getSingleton(String beanName, boolean allowEarlyReference)  // singletonFactory.getObject()实际上返回的对象是AbstractAutowireCapableBeanFactory类getEarlyBeanReference()创建的，可看372行代码
+    getSingleton(String beanName, ObjectFactory<?> singletonFactory)
+    containsSingleton(String beanName)  // 判断beanName是否存在
+    beforeSingletonCreation(String beanName)    // 单例对象创建前
+    afterSingletonCreation(String beanName) // 单例对象创建完成后
+    setCurrentlyInCreation(String beanName, boolean inCreation) // 设置beanName是否singletonObjects中
+    isCurrentlyInCreation(String beanName)  // 判断beanName是否处于创建中状态
+    destroySingleton(String beanName)  // 根据beanName销毁某一个bean
+    destroySingletons() // 销毁所有bean
+
+
+
+
