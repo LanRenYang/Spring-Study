@@ -140,7 +140,11 @@ DefaultSingletonBeanRegistry：
     singletonFactories：单例工厂对象，testController在创建的过程中发现需要依赖其他bean,testController会先被保存在singletonFactories中，
     earlySingletonObjects：早期的单例对象池，
     registeredSingletons：注册的单例对象池，
+<<<<<<< HEAD
     singletonsCurrentlyInCreation：当前正在创建的单例对象池，在对象开始创建前会add.put(beanName),对象创建完成后会remove(beanName)。对象创建的创建分为2步，1，用构造方法初始化实例；2，为对象属性赋值。
+=======
+    singletonsCurrentlyInCreation：当前正在创建的单例对象池，对象的创建分为2步，1，用构造方法初始化实例；2，为对象属性赋值。
+>>>>>>> b1815d2238b5dd3bfdc1723e3f79ef0826119717
                                    在beforeSingletonCreation()中会singletonsCurrentlyInCreation.add(beanName)，在afterSingletonCreation()中会singletonsCurrentlyInCreation.remove(beanName)。
     inCreationCheckExclusions：bean在创建过程中中的检查排除集合，
     成员方法：

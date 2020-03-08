@@ -1,6 +1,7 @@
 package com.example.demo.ioc;
 
 
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.stereotype.Component;
 
 /**
@@ -10,7 +11,7 @@ import org.springframework.stereotype.Component;
  * 它调用构造方法，并把改对象代理成为ObjectFactory对象，以便用于将来创建自己需要的bean对象——> getObjec()——>createBean()——>1),resolveBeforeInstantiation();2),doCreateBean()方法。
  */
 @Component
-//@ComponentScan(value = "com.example.demo.ioc")
+@ComponentScan(value = "com.example.demo.ioc")
 public class TestController {
 
 //    @Autowired
@@ -23,4 +24,5 @@ public class TestController {
     public void test() {
        // testService.test();
     }
+
 }
