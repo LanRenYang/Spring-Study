@@ -13,18 +13,34 @@ public class TestMain {
         FairSync 公平锁，如果锁已被其他线程获得，会先判断是否有等待队列，如果有等待队列，那么这个线程会被放入线程等待队列，等锁被释放时，队列中的线程按顺序去获取锁
         NonfairSync 非公平锁 如果锁已被其他线程获得，不会判断是否有等待队列，直接使用compareAndSwap去进行锁的占用;
         ReentrantLock默认使用NonfairSync锁，使用ReentrantLock(boolean fair)构造方法可以选择创建锁类型。
+             // 线程加锁的过程分为两步：1，获取锁；2，修改state值，是为上锁
             FairSync lock()的方法实现：
                  final void lock() {
-                    // 把当前线程放入队列等待
+                    // 获取锁
                     acquire(1);
                 }
             NonfairSync lock()的方法实现：
-                  // 先尝试获取一次，破坏了公平原则，所以叫非公平锁
+                  // 直接修改state值，直接上锁
                   if (compareAndSetState(0, 1))
                     setExclusiveOwnerThread(Thread.currentThread());
-                  // 尝试获取获取失败，则放入队列等待
+                  // 上锁失败，来获取锁
                 else
                     acquire(1);
+     */
+    /*
+        acquire()解析：
+        AbstractQueuedSynchronizer.acquire(){
+            if (!tryAcquire(arg) &&
+            acquireQueued(addWaiter(Node.EXCLUSIVE), arg))
+            selfInterrupt();
+        }
+        这里用到了四个方法：
+       tryAcquire(); acquireQueued(); addWaiter(); selfInterrupt()
+            acquireQueued(); addWaiter(); selfInterrupt()方法都使用的AbstractQueuedSynchronizer实现的方法
+            tryAcquire()：尝试获取锁方法，AbstractQueuedSynchronizer的tryAcquire()是一个空方法，具体代码逻辑由子类实现：
+            在FairSync的tryAcquire()中：会使用hasQueuedPredecessors()方法判断线程队列中是否由线程在等待，如果没有才使用compareAndSetState()修改state状态上锁；
+            在NonFairSync的tryAcquire()中：是调用了nonfairTryAcquire(),在这个方法中NonFairSync锁，不公平的本质暴露无疑，他还是调用compareAndSetState()尝试直接上锁，不想排队。
+
 
      */
     // reentrantLock 就相当于一把锁

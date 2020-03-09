@@ -1,7 +1,6 @@
 package com.example.demo.ioc;
 
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.stereotype.Component;
 
@@ -15,15 +14,15 @@ import org.springframework.stereotype.Component;
 @ComponentScan(value = "com.example.demo.ioc")
 public class TestController {
 
-    @Autowired
-    private TestService testService;
+//    @Autowired
+//    private TestService testService;
 
     public TestController() {
         System.out.println("TestController构造方法");
     }
 
     public void test() {
-        testService.test();
+       // testService.test();
     }
 
 }
