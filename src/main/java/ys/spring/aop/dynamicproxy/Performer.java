@@ -7,7 +7,9 @@ package ys.spring.aop.dynamicproxy;
 public class Performer implements Ability {
 
     @Override
-    public void ability(int x) {
+    public void ability(int x) throws InterruptedException {
+        Thread.sleep(1500);
         System.out.println("我是演员，开机表演,第" + x + "集");
+        Thread.sleep(2000);
     }
 }

@@ -43,6 +43,7 @@ public class ProxyClass {
          * 目标对象执行前的执行方法
          */
         private void testBefore() {
+            TestUtils.num++;
             System.out.println("经纪人酬劳争取");
         }
 
@@ -50,7 +51,16 @@ public class ProxyClass {
          * 目标对象执行后的执行方法
          */
         private void testAfter() {
+            TestUtils.num++;
             System.out.println("经纪人善后");
+        }
+
+
+        /**
+         * 目标对象执行后的执行方法
+         */
+        private void test() {
+            System.out.println("一个测试方法");
         }
     }
 }
