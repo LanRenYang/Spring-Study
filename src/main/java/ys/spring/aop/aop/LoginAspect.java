@@ -13,7 +13,7 @@ public class LoginAspect {
      * 前置通知
      */
     @Before(value = "execution(* ys.spring.aop.aop.service.*.*(..))")
-    public void testBefore() {
+    public void testBefore(JoinPoint joinPoint) {
         System.out.println("前置通知");
     }
 
